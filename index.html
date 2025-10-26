@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soccer League Schedule Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .schedule-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .schedule-container.active {
+            display: block;
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .schedule-header h2 {
+            color: #333;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .week-group {
+            background-color: #f9f9f9;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+
+        .alert-warning {
+            background-color: #fff3e0;
+            color: #f57c00;
+            border-left: 4px solid #f57c00;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .schedule-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .export-buttons {
+                margin-top: 10px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚽ Soccer League Schedule Generator</h1>
+            <p>Create professional round-robin tournament schedules in seconds</p>
+        </div>
+
+        <div class="card">
+            <form id="scheduleForm">
+                <div class="form-group">
+                    <label for="teams">Team Names</label>
+                    <textarea id="teams" placeholder="Enter team names, one per line&#10;Example:&#10;Team A&#10;Team B&#10;Team C&#10;Team D" required></textarea>
+                    <small>Enter one team name per line. Odd number of teams? We'll add a BYE week automatically.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="startDate">Season Start Date</label>
+                    <input type="date" id="startDate" required>
+                    <small>The first game will be scheduled on or after this date</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="dayOfWeek">Game Day</label>
+                    <select id="dayOfWeek" required>
+                        <option value="Sunday">Sunday</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday" selected>Saturday</option>
+                    </select>
+                    <small>All games will be scheduled on this day of the week</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="blackoutDates">Blackout Dates (Optional)</label>
+                    <textarea id="blackoutDates" placeholder="Enter dates to skip, one per line (YYYY-MM-DD format)&#10;Example:&#10;2025-12-25&#10;2026-01-01"></textarea>
+                    <small>Skip weeks for holidays, tournaments, or weather. Use YYYY-MM-DD format.</small>
+                </div>
+
+                <button type="submit" class="btn">Generate Schedule</button>
+            </form>
+        </div>
+
+        <div id="scheduleContainer" class="card schedule-container">
+            <div class="schedule-header">
+                <h2>Your Schedule</h2>
+                <div class="export-buttons">
+                    <button onclick="exportToCSV()" class="btn btn-secondary">Download CSV</button>
+                    <button onclick="exportToExcel()" class="btn">Download Excel</button>
+                </div>
+            </div>
+            <div id="scheduleInfo"></div>
+            <div id="scheduleTable"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script>
+        let currentSchedule = [];
+
+        // Set default start date to next Saturday
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const daysUntilSaturday = (6 - today.getDay() + 7) % 7 || 7;
+            const nextSaturday = new Date(today);
+            nextSaturday.setDate(today.getDate() + daysUntilSaturday);
+            document.getElementById('startDate').valueAsDate = nextSaturday;
+        });
+
+        document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateSchedule();
+        });
+
+        function generateSchedule() {
+            // Get form values
+            const teamsInput = document.getElementById('teams').value.trim();
+            const startDate = new Date(document.getElementById('startDate').value);
+            const dayOfWeek = document.getElementById('dayOfWeek').value;
+            const blackoutDatesInput = document.getElementById('blackoutDates').value.trim();
+
+            // Parse teams
+            let teams = teamsInput.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+
+            if (teams.length < 2) {
+                alert('Please enter at least 2 teams');
+                return;
+            }
+
+            // Parse blackout dates
+            let blackoutDates = [];
+            if (blackoutDatesInput) {
+                blackoutDates = blackoutDatesInput.split('\n')
+                    .map(d => d.trim())
+                    .filter(d => d.length > 0)
+                    .map(d => new Date(d));
+            }
+
+            // Add BYE if odd number of teams
+            const hadOddTeams = teams.length % 2 !== 0;
+            if (hadOddTeams) {
+                teams.push('BYE');
+            }
+
+            const nTeams = teams.length;
+            const nRounds = nTeams - 1;
+            const matchDays = 2 * nRounds; // Double round-robin
+
+            // Generate round-robin pairings using rotation algorithm
+            const rounds = [];
+            let rotatingTeams = [...teams];
+
+            for (let r = 0; r < nRounds; r++) {
+                const pairings = [];
+                for (let i = 0; i < nTeams / 2; i++) {
+                    pairings.push({
+                        home: rotatingTeams[i],
+                        away: rotatingTeams[nTeams - 1 - i]
+                    });
+                }
+                rounds.push(pairings);
+
+                // Rotate (keep first team fixed)
+                rotatingTeams = [
+                    rotatingTeams[0],
+                    rotatingTeams[nTeams - 1],
+                    ...rotatingTeams.slice(1, nTeams - 1)
+                ];
+            }
+
+            // Create second half with reversed home/away
+            const secondHalf = rounds.map(round =>
+                round.map(game => ({ home: game.away, away: game.home }))
+            );
+
+            const fullSchedule = [...rounds, ...secondHalf];
+
+            // Generate valid game dates
+            const gameDates = [];
+            let currentDate = new Date(startDate);
+
+            // Find first valid date
+            while (gameDates.length < matchDays) {
+                if (currentDate.toLocaleDateString('en-US', { weekday: 'long' }) === dayOfWeek) {
+                    const dateStr = currentDate.toISOString().split('T')[0];
+                    const isBlackout = blackoutDates.some(bd =>
+                        bd.toISOString().split('T')[0] === dateStr
+                    );
+
+                    if (!isBlackout) {
+                        gameDates.push(new Date(currentDate));
+                    }
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Build final schedule
+            currentSchedule = [];
+            fullSchedule.forEach((round, roundIndex) => {
+                round.forEach(game => {
+                    // Skip BYE games
+                    if (game.home !== 'BYE' && game.away !== 'BYE') {
+                        currentSchedule.push({
+                            week: roundIndex + 1,
+                            date: gameDates[roundIndex].toISOString().split('T')[0],
+                            home: game.home,
+                            away: game.away
+                        });
+                    }
+                });
+            });
+
+            displaySchedule(hadOddTeams, teams.length - (hadOddTeams ? 1 : 0));
+        }
+
+        function displaySchedule(hadOddTeams, originalTeamCount) {
+            const container = document.getElementById('scheduleContainer');
+            const infoDiv = document.getElementById('scheduleInfo');
+            const tableDiv = document.getElementById('scheduleTable');
+
+            // Show info
+            let infoHTML = `<div class="alert alert-info">
+                <strong>Schedule Generated!</strong>
+                ${currentSchedule.length} games scheduled across ${Math.max(...currentSchedule.map(g => g.week))} weeks.
+            </div>`;
+
+            if (hadOddTeams) {
+                infoHTML += `<div class="alert alert-warning">
+                    <strong>Note:</strong> You have an odd number of teams (${originalTeamCount}).
+                    Each team will have a BYE week where they don't play.
+                </div>`;
+            }
+
+            infoDiv.innerHTML = infoHTML;
+
+            // Create table
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Week</th>
+                            <th>Date</th>
+                            <th>Home Team</th>
+                            <th>Away Team</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            currentSchedule.forEach(game => {
+                tableHTML += `
+                    <tr>
+                        <td>${game.week}</td>
+                        <td>${new Date(game.date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        })}</td>
+                        <td>${game.home}</td>
+                        <td>${game.away}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            tableDiv.innerHTML = tableHTML;
+            container.classList.add('active');
+
+            // Scroll to schedule
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function exportToCSV() {
+            if (currentSchedule.length === 0) return;
+
+            let csv = 'Week,Date,Home Team,Away Team\n';
+            currentSchedule.forEach(game => {
+                csv += `${game.week},${game.date},${game.home},${game.away}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `soccer-schedule-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function exportToExcel() {
+            if (currentSchedule.length === 0) return;
+
+            const ws_data = [
+                ['Week', 'Date', 'Home Team', 'Away Team']
+            ];
+
+            currentSchedule.forEach(game => {
+                ws_data.push([
+                    game.week,
+                    game.date,
+                    game.home,
+                    game.away
+                ]);
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 8 },
+                { wch: 12 },
+                { wch: 20 },
+                { wch: 20 }
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Schedule');
+            XLSX.writeFile(wb, `soccer-schedule-${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+    </script>
+</body>
+</html>

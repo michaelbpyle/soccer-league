@@ -1,0 +1,74 @@
+<%- include('header') %>
+<% var page = 'results'; %>
+
+<h1 style="color:#fff; margin-bottom:20px;">Results</h1>
+
+<% if (season) { %>
+  <div class="two-col">
+    <div class="card">
+      <h3>Record Score</h3>
+      <% if (unplayed.length === 0) { %>
+        <p style="color:#666;">No unplayed games remaining.</p>
+      <% } else { %>
+        <form method="POST" action="/results/record">
+          <div class="form-group">
+            <label>Game</label>
+            <select name="game_id" required>
+              <option value="">Select a game...</option>
+              <% for (const g of unplayed) { %>
+                <option value="<%= g.id %>">
+                  <%= g.match_day %> &mdash;
+                  <%= g.home_name %> vs <%= g.away_name %>
+                  (<%= g.division_name %>)
+                  <% if (g.is_playoff) { %>[<%= g.playoff_round.toUpperCase() %>]<% } %>
+                </option>
+              <% } %>
+            </select>
+          </div>
+          <div class="form-inline">
+            <div class="form-group">
+              <label>Home Score</label>
+              <input type="number" name="home_score" min="0" max="99" required style="width:80px;">
+            </div>
+            <div class="form-group">
+              <label>Away Score</label>
+              <input type="number" name="away_score" min="0" max="99" required style="width:80px;">
+            </div>
+            <button type="submit" class="btn btn-primary">Record</button>
+          </div>
+        </form>
+      <% } %>
+    </div>
+
+    <div class="card">
+      <h3>Recent Results</h3>
+      <% if (results.length === 0) { %>
+        <p style="color:#666;">No results yet.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Home</th><th>Score</th><th>Away</th></tr></thead>
+          <tbody>
+          <% for (const g of results) {
+            const dateObj = new Date(g.match_day + 'T12:00:00');
+            const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          %>
+            <tr>
+              <td>
+                <%= dateStr %>
+                <% if (g.is_playoff) { %><span class="playoff-marker"><%= g.playoff_round === 'semifinal' ? 'SF' : 'FINAL' %></span><% } %>
+              </td>
+              <td><span class="color-dot" style="background:<%= g.home_color %>"></span><%= g.home_name %></td>
+              <td style="text-align:center; font-weight:700;"><%= g.home_score %> - <%= g.away_score %></td>
+              <td><span class="color-dot" style="background:<%= g.away_color %>"></span><%= g.away_name %></td>
+            </tr>
+          <% } %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+<% } else { %>
+  <div class="card"><p>No active season.</p></div>
+<% } %>
+
+<%- include('footer') %>

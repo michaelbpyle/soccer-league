@@ -1,0 +1,50 @@
+<%- include('header') %>
+<% var page = 'standings'; %>
+
+<h1 style="color:#fff; margin-bottom:20px;">Standings</h1>
+
+<% if (season) { %>
+  <% for (const div of divisions) {
+    const st = standingsByDiv[div.id] || [];
+    const divNum = divisions.indexOf(div) + 1;
+  %>
+    <div class="card">
+      <h2><span class="div-badge div-<%= divNum %>">Div <%= divNum %></span> <%= div.name %></h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Team</th><th>Color</th><th>P</th>
+            <th>W</th><th>D</th><th>L</th>
+            <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% st.forEach((row, i) => { %>
+          <tr>
+            <td><%= i + 1 %></td>
+            <td>
+              <span class="color-dot" style="background:<%= row.color_hex %>"></span>
+              <strong><%= row.name %></strong>
+              <% if (i < 4) { %><span class="qualify"> *</span><% } %>
+            </td>
+            <td style="font-size:0.8em; color:#888;"><%= row.color_name %></td>
+            <td><%= row.played %></td>
+            <td><%= row.wins %></td>
+            <td><%= row.draws %></td>
+            <td><%= row.losses %></td>
+            <td><%= row.goals_for %></td>
+            <td><%= row.goals_against %></td>
+            <td><%= row.goal_diff >= 0 ? '+' : '' %><%= row.goal_diff %></td>
+            <td style="font-weight:700; font-size:1.1em;"><%= row.points %></td>
+          </tr>
+        <% }); %>
+        </tbody>
+      </table>
+      <p style="margin-top:8px; font-size:0.8em; color:#666;">* Top 4 qualify for playoffs | 3 pts for win, 1 for draw</p>
+    </div>
+  <% } %>
+<% } else { %>
+  <div class="card"><p>No active season.</p></div>
+<% } %>
+
+<%- include('footer') %>

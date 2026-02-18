@@ -1,0 +1,15 @@
+[Unit]
+Description=Soccer League Management System
+After=network.target
+
+[Service]
+Type=simple
+User=mbp03c
+WorkingDirectory=/opt/soccer-league
+ExecStart=/usr/bin/node index.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

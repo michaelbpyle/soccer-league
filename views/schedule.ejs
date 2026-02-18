@@ -1,0 +1,71 @@
+<%- include('header') %>
+<% var page = 'schedule'; %>
+
+<h1 style="color:#fff; margin-bottom:20px;">Schedule</h1>
+
+<% if (season) { %>
+  <div class="filter-tabs">
+    <a href="/schedule" class="<%= !selectedDiv ? 'active' : '' %>">All Divisions</a>
+    <% for (const div of divisions) {
+      const divNum = divisions.indexOf(div) + 1;
+    %>
+      <a href="/schedule?div=<%= div.id %>" class="<%= selectedDiv === div.id ? 'active' : '' %>">
+        Division <%= divNum %>
+      </a>
+    <% } %>
+  </div>
+
+  <% if (schedule.length === 0) { %>
+    <div class="card"><p style="color:#666;">No games scheduled.</p></div>
+  <% } else { %>
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Round</th><th>Date</th><th>Home</th><th></th><th>Away</th><th>Division</th></tr>
+        </thead>
+        <tbody>
+        <%
+          let currentDate = '';
+          for (const g of schedule) {
+            const dateObj = new Date(g.match_day + 'T12:00:00');
+            const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const isNewDate = g.match_day !== currentDate;
+            currentDate = g.match_day;
+            const divNum = divisions.findIndex(d => d.name === g.division_name) + 1;
+        %>
+          <tr<%= isNewDate ? ' style="border-top: 2px solid #3a3a5a;"' : '' %>>
+            <td>
+              <% if (g.is_playoff) { %>
+                <span class="playoff-marker"><%= g.playoff_round === 'semifinal' ? 'SF' : 'FINAL' %></span>
+              <% } else { %>
+                R<%= g.round %>
+              <% } %>
+            </td>
+            <td><%= dateStr %></td>
+            <td>
+              <span class="color-dot" style="background:<%= g.home_color %>"></span>
+              <%= g.home_name %>
+            </td>
+            <td style="text-align:center; color:#666;">
+              <% if (g.played) { %>
+                <strong style="color:#fff;"><%= g.home_score %> - <%= g.away_score %></strong>
+              <% } else { %>
+                vs
+              <% } %>
+            </td>
+            <td>
+              <span class="color-dot" style="background:<%= g.away_color %>"></span>
+              <%= g.away_name %>
+            </td>
+            <td><span class="div-badge div-<%= divNum %>">Div <%= divNum %></span></td>
+          </tr>
+        <% } %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+<% } else { %>
+  <div class="card"><p>No active season.</p></div>
+<% } %>
+
+<%- include('footer') %>

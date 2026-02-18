@@ -1,0 +1,77 @@
+<%- include('header') %>
+<% var page = 'teams'; %>
+
+<h1 style="color:#fff; margin-bottom:20px;">Teams</h1>
+
+<% if (season) { %>
+  <% for (const div of divisions) {
+    const teams = teamsByDiv[div.id] || [];
+    const divNum = divisions.indexOf(div) + 1;
+  %>
+    <div class="card">
+      <h2><span class="div-badge div-<%= divNum %>">Div <%= divNum %></span> <%= div.name %></h2>
+      <table>
+        <thead>
+          <tr><th>Team</th><th>Short</th><th>Color</th><th></th></tr>
+        </thead>
+        <tbody>
+        <% for (const t of teams) { %>
+          <tr>
+            <td>
+              <span class="color-dot" style="background:<%= t.color_hex %>"></span>
+              <strong><%= t.name %></strong>
+            </td>
+            <td><%= t.short_name %></td>
+            <td>
+              <span style="display:inline-block; width:20px; height:20px; border-radius:4px; background:<%= t.color_hex %>; border:1px solid rgba(255,255,255,0.2); vertical-align:middle; margin-right:6px;"></span>
+              <%= t.color_name %>
+            </td>
+            <td>
+              <form method="POST" action="/teams/delete/<%= t.id %>" style="display:inline;" onsubmit="return confirm('Remove this team?')">
+                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+              </form>
+            </td>
+          </tr>
+        <% } %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+  <div class="card">
+    <h3>Add Team</h3>
+    <form method="POST" action="/teams/add">
+      <div class="form-inline">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" name="name" required placeholder="Team name">
+        </div>
+        <div class="form-group">
+          <label>Short</label>
+          <input type="text" name="short_name" maxlength="3" placeholder="ABC" style="width:80px;">
+        </div>
+        <div class="form-group">
+          <label>Color Hex</label>
+          <input type="color" name="color_hex" value="#888888" style="width:60px; padding:2px;">
+        </div>
+        <div class="form-group">
+          <label>Color Name</label>
+          <input type="text" name="color_name" placeholder="Gray">
+        </div>
+        <div class="form-group">
+          <label>Division</label>
+          <select name="division_id">
+            <% for (const div of divisions) { %>
+              <option value="<%= div.id %>"><%= div.name %></option>
+            <% } %>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Team</button>
+      </div>
+    </form>
+  </div>
+<% } else { %>
+  <div class="card"><p>No active season.</p></div>
+<% } %>
+
+<%- include('footer') %>

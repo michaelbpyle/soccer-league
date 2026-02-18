@@ -9,10 +9,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ─── Middleware ───────────────────────────────────────────
+const BASE_PATH = process.env.BASE_PATH || '';
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use((req, res, next) => { res.locals.base = BASE_PATH; next(); });
 
 // ─── Routes ──────────────────────────────────────────────
 
@@ -74,12 +76,12 @@ app.post('/teams/add', (req, res) => {
   if (season && name && division_id) {
     db.addTeam(name, short_name || name.substring(0, 3).toUpperCase(), color_hex || '#888888', color_name || 'Gray', season.id, parseInt(division_id));
   }
-  res.redirect('/teams');
+  res.redirect(BASE_PATH + '/teams');
 });
 
 app.post('/teams/delete/:id', (req, res) => {
   db.deleteTeam(parseInt(req.params.id));
-  res.redirect('/teams');
+  res.redirect(BASE_PATH + '/teams');
 });
 
 // Results
@@ -101,7 +103,7 @@ app.post('/results/record', async (req, res) => {
       try { await bot.postResult(game); } catch (e) { console.error('Discord post failed:', e.message); }
     }
   }
-  res.redirect('/results');
+  res.redirect(BASE_PATH + '/results');
 });
 
 // Admin
@@ -117,7 +119,7 @@ app.post('/admin/season', (req, res) => {
   if (name && start_date) {
     db.createSeason(name, start_date, game_day || 'Saturday');
   }
-  res.redirect('/admin');
+  res.redirect(BASE_PATH + '/admin');
 });
 
 app.post('/admin/regenerate', (req, res) => {
@@ -125,7 +127,7 @@ app.post('/admin/regenerate', (req, res) => {
   if (season) {
     db.regenerateAllSchedules(season.id);
   }
-  res.redirect('/admin');
+  res.redirect(BASE_PATH + '/admin');
 });
 
 app.post('/admin/blackout', (req, res) => {
@@ -134,12 +136,12 @@ app.post('/admin/blackout', (req, res) => {
   if (season && date) {
     db.addBlackoutDate(season.id, date, reason || null);
   }
-  res.redirect('/admin');
+  res.redirect(BASE_PATH + '/admin');
 });
 
 app.post('/admin/blackout/delete/:id', (req, res) => {
   db.deleteBlackoutDate(parseInt(req.params.id));
-  res.redirect('/admin');
+  res.redirect(BASE_PATH + '/admin');
 });
 
 // API

@@ -5,11 +5,11 @@
 
 <% if (season) { %>
   <div class="filter-tabs">
-    <a href="/schedule" class="<%= !selectedDiv ? 'active' : '' %>">All Divisions</a>
+    <a href="<%= base %>/schedule" class="<%= !selectedDiv ? 'active' : '' %>">All Divisions</a>
     <% for (const div of divisions) {
       const divNum = divisions.indexOf(div) + 1;
     %>
-      <a href="/schedule?div=<%= div.id %>" class="<%= selectedDiv === div.id ? 'active' : '' %>">
+      <a href="<%= base %>/schedule?div=<%= div.id %>" class="<%= selectedDiv === div.id ? 'active' : '' %>">
         Division <%= divNum %>
       </a>
     <% } %>

@@ -218,12 +218,12 @@
   <div class="navbar">
     <span class="brand">Soccer League</span>
     <nav>
-      <a href="/" class="<%= typeof page !== 'undefined' && page === 'dashboard' ? 'active' : '' %>">Dashboard</a>
-      <a href="/schedule" class="<%= typeof page !== 'undefined' && page === 'schedule' ? 'active' : '' %>">Schedule</a>
-      <a href="/standings" class="<%= typeof page !== 'undefined' && page === 'standings' ? 'active' : '' %>">Standings</a>
-      <a href="/teams" class="<%= typeof page !== 'undefined' && page === 'teams' ? 'active' : '' %>">Teams</a>
-      <a href="/results" class="<%= typeof page !== 'undefined' && page === 'results' ? 'active' : '' %>">Results</a>
-      <a href="/admin" class="<%= typeof page !== 'undefined' && page === 'admin' ? 'active' : '' %>">Admin</a>
+      <a href="<%= base %>/" class="<%= typeof page !== 'undefined' && page === 'dashboard' ? 'active' : '' %>">Dashboard</a>
+      <a href="<%= base %>/schedule" class="<%= typeof page !== 'undefined' && page === 'schedule' ? 'active' : '' %>">Schedule</a>
+      <a href="<%= base %>/standings" class="<%= typeof page !== 'undefined' && page === 'standings' ? 'active' : '' %>">Standings</a>
+      <a href="<%= base %>/teams" class="<%= typeof page !== 'undefined' && page === 'teams' ? 'active' : '' %>">Teams</a>
+      <a href="<%= base %>/results" class="<%= typeof page !== 'undefined' && page === 'results' ? 'active' : '' %>">Results</a>
+      <a href="<%= base %>/admin" class="<%= typeof page !== 'undefined' && page === 'admin' ? 'active' : '' %>">Admin</a>
       <span style="flex-grow:1"></span>
       <a href="https://michaelbpyle.com/data-projects/" style="opacity:0.7; font-size:0.8em;">Data Projects</a>
       <a href="https://michaelbpyle.com" style="opacity:0.7; font-size:0.8em;">MBP.COM</a>

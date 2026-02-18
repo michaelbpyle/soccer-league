@@ -15,7 +15,7 @@
           <tr><td style="color:#888;">Divisions</td><td><%= divisions.length %></td></tr>
         </table>
         <div style="margin-top:12px;">
-          <form method="POST" action="/admin/regenerate" onsubmit="return confirm('This will delete all current game results and regenerate schedules. Are you sure?')">
+          <form method="POST" action="<%= base %>/admin/regenerate" onsubmit="return confirm('This will delete all current game results and regenerate schedules. Are you sure?')">
             <button type="submit" class="btn btn-danger">Regenerate All Schedules</button>
           </form>
         </div>
@@ -26,7 +26,7 @@
 
     <div class="card">
       <h3>Create New Season</h3>
-      <form method="POST" action="/admin/season">
+      <form method="POST" action="<%= base %>/admin/season">
         <div class="form-group">
           <label>Season Name</label>
           <input type="text" name="name" required placeholder="Fall 2026">
@@ -66,7 +66,7 @@
                 <td><%= b.date %></td>
                 <td><%= b.reason || '—' %></td>
                 <td>
-                  <form method="POST" action="/admin/blackout/delete/<%= b.id %>" style="display:inline;">
+                  <form method="POST" action="<%= base %>/admin/blackout/delete/<%= b.id %>" style="display:inline;">
                     <button type="submit" class="btn btn-danger btn-sm">Remove</button>
                   </form>
                 </td>
@@ -78,7 +78,7 @@
           <p style="color:#666; margin-bottom:12px;">No blackout dates set.</p>
         <% } %>
 
-        <form method="POST" action="/admin/blackout" style="margin-top:12px;">
+        <form method="POST" action="<%= base %>/admin/blackout" style="margin-top:12px;">
           <div class="form-inline">
             <div class="form-group">
               <label>Date</label>

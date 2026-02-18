@@ -2,7 +2,7 @@
 <% var page = 'dashboard'; %>
 
 <% if (!season) { %>
-  <div class="card"><p>No active season. <a href="/admin">Create one</a>.</p></div>
+  <div class="card"><p>No active season. <a href="<%= base %>/admin">Create one</a>.</p></div>
 <% } else { %>
 
   <h1 style="color:#fff; margin-bottom:20px;"><%= season.name %></h1>

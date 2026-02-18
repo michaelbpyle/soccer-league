@@ -10,7 +10,7 @@
       <% if (unplayed.length === 0) { %>
         <p style="color:#666;">No unplayed games remaining.</p>
       <% } else { %>
-        <form method="POST" action="/results/record">
+        <form method="POST" action="<%= base %>/results/record">
           <div class="form-group">
             <label>Game</label>
             <select name="game_id" required>

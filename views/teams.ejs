@@ -27,7 +27,7 @@
               <%= t.color_name %>
             </td>
             <td>
-              <form method="POST" action="/teams/delete/<%= t.id %>" style="display:inline;" onsubmit="return confirm('Remove this team?')">
+              <form method="POST" action="<%= base %>/teams/delete/<%= t.id %>" style="display:inline;" onsubmit="return confirm('Remove this team?')">
                 <button type="submit" class="btn btn-danger btn-sm">Remove</button>
               </form>
             </td>
@@ -40,7 +40,7 @@
 
   <div class="card">
     <h3>Add Team</h3>
-    <form method="POST" action="/teams/add">
+    <form method="POST" action="<%= base %>/teams/add">
       <div class="form-inline">
         <div class="form-group">
           <label>Name</label>

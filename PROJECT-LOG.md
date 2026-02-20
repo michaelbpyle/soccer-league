@@ -51,7 +51,7 @@ A full-stack soccer league management system with web dashboard and Discord bot 
 ### 3:14 AM — Colors Added to Website
 - Color dot indicators across all pages
 
-### 2026-02-18 — Migration to DashDaddy VM (Claude Code)
+### 2026-02-18 — Migration to DashDaddy VM (Claude Code, Session 1)
 - Rebuilt entire application from documentation on DashDaddy VM (10.0.10.11)
 - Installed Node.js v22.22.0 on DashDaddy
 - Deployed to `/opt/soccer-league/` with systemd service
@@ -196,10 +196,14 @@ soccer-league/
 ├── bot.js                  # Discord bot + slash commands
 ├── simulate.js             # Full season simulation script
 ├── register-commands.js    # Standalone command registration
+├── cleanup.js              # Discord message cleanup utility
+├── setup-discord.js        # One-time channel setup script
 ├── deploy.sh               # Deployment script for DashDaddy
 ├── soccer-league.service   # Systemd service file
 ├── index.html              # Original static schedule generator
+├── public/favicon.png      # Site favicon (PiL.png)
 ├── data/league.db          # SQLite database (gitignored)
+├── data/snapshots/         # Auto-backups before destructive ops (gitignored)
 └── views/
     ├── header.ejs
     ├── footer.ejs
@@ -211,9 +215,25 @@ soccer-league/
     └── admin.ejs
 ```
 
+### 2026-02-20 — Discord Enhancements & Safeguards (Claude Code, Session 2)
+- Fixed BASE_PATH routing for reverse proxy (all nav links, form actions, redirects)
+- Added new-member onboarding: Meola greets joiners with interactive role selection
+  - Gender (Male/Female), Experience (5 levels), Position (GK/DEF/MID/FW), Team (all 21)
+  - Team selection posts welcome in that team's channel
+- Created Discord roles for all onboarding options + all 21 teams
+- Fixed duplicate #schedule and #standings channels (deleted relics from OpenClaw)
+- Posted pinned welcome message in #league-chat
+- Posted full schedule + standings in each division chat
+- Populated global #schedule and #standings channels
+- Added database snapshot system: auto-backup before season creation or schedule regeneration
+  - Snapshots saved to `data/snapshots/` as timestamped `.db` files
+- Added favicon (PiL.png)
+- Added cleanup.js and setup-discord.js utility scripts
+
 ---
 
 ## TODO
+- [ ] **Pierluigi referee bot** — Second Discord bot ("Pierluigi") for the referee channel. Responsible for referee assignment to games, score workflow, and referee management. Needs: create bot application in Discord Developer Portal, get token, write bot code, deploy alongside Meola.
 - [ ] Create Discord channels for new teams (FC Tchoupitoulas, Krewe de Goal, Bayou Brawlers)
 - [ ] Player registration / roster management
 - [ ] Game times and field locations
@@ -221,10 +241,10 @@ soccer-league/
 - [ ] Print-friendly schedule export (PDF)
 - [ ] Season history / archive
 - [ ] Mobile app or PWA
-- [ ] Referee assignment system
 - [ ] Sub request integration (connect to #sub-avails / #sub-needs channels)
 
 ---
 
 *Originally built by Moneypenny (OpenClaw) — Feb 17, 2026*
 *Migrated to DashDaddy by Claude Code — Feb 18, 2026*
+*Enhanced by Claude Code — Feb 20, 2026*

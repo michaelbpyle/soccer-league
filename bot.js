@@ -1,8 +1,15 @@
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
 const db = require('./database');
 
 const GUILD_ID = '1391648870278369350';
 const LEAGUE_CHAT_ID = '1391648870915637260';
+
+// ─── Onboarding Role Groups ─────────────────────────────
+const ROLE_GROUPS = {
+  gender: ['Male', 'Female'],
+  experience: ['Just Starting', 'Played as a Kid', 'Played in High School', 'Played in College', 'Played Pro/Semi-Pro'],
+  position: ['GK', 'DEF', 'MID', 'FW'],
+};
 
 // Color emoji mapping
 const colorEmoji = {
@@ -22,26 +29,55 @@ function getEmoji(hex) {
 let client = null;
 
 function createBot() {
-  client = new Client({ intents: [GatewayIntentBits.Guilds] });
+  client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
 
   client.once('ready', async () => {
     console.log(`Discord bot logged in as ${client.user.tag}`);
     await registerCommands();
     await ensureChannels();
+    await ensureRoles();
+  });
+
+  client.on('guildMemberAdd', async (member) => {
+    try {
+      await sendWelcome(member);
+    } catch (err) {
+      console.error('Welcome message error:', err);
+    }
   });
 
   client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-    try {
-      await handleCommand(interaction);
-    } catch (err) {
-      console.error('Command error:', err);
-      const reply = { content: 'Something went wrong.', ephemeral: true };
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp(reply);
-      } else {
-        await interaction.reply(reply);
+    if (interaction.isChatInputCommand()) {
+      try {
+        await handleCommand(interaction);
+      } catch (err) {
+        console.error('Command error:', err);
+        const reply = { content: 'Something went wrong.', ephemeral: true };
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp(reply);
+        } else {
+          await interaction.reply(reply);
+        }
       }
+      return;
+    }
+
+    if (interaction.isButton() && interaction.customId.startsWith('role_gender_')) {
+      const gender = interaction.customId.replace('role_gender_', '');
+      await assignRoles(interaction, 'gender', [gender]);
+      return;
+    }
+    if (interaction.isStringSelectMenu() && interaction.customId === 'role_experience') {
+      await assignRoles(interaction, 'experience', interaction.values);
+      return;
+    }
+    if (interaction.isStringSelectMenu() && interaction.customId === 'role_position') {
+      await assignRoles(interaction, 'position', interaction.values);
+      return;
+    }
+    if (interaction.isStringSelectMenu() && interaction.customId === 'role_team') {
+      await assignTeamRoles(interaction, interaction.values);
+      return;
     }
   });
 
@@ -320,6 +356,174 @@ async function cmdScore(interaction, season) {
 
   // Post to league chat
   await postToChannel(LEAGUE_CHAT_ID, { embeds: [embed] });
+}
+
+// ─── Onboarding ─────────────────────────────────────────
+async function ensureRoles() {
+  const guild = client.guilds.cache.get(GUILD_ID);
+  if (!guild) return;
+
+  const allRoles = [...ROLE_GROUPS.gender, ...ROLE_GROUPS.experience, ...ROLE_GROUPS.position];
+
+  // Also ensure a role for every active team
+  const season = db.getActiveSeason();
+  if (season) {
+    const teams = db.getAllTeams(season.id);
+    for (const t of teams) allRoles.push(t.name);
+  }
+
+  for (const roleName of allRoles) {
+    if (!guild.roles.cache.find(r => r.name === roleName)) {
+      try {
+        await guild.roles.create({ name: roleName, reason: 'Soccer League onboarding' });
+        console.log(`Created role: ${roleName}`);
+      } catch (err) {
+        console.error(`Failed to create role ${roleName}:`, err.message);
+      }
+    }
+  }
+}
+
+async function sendWelcome(member) {
+  const embed = new EmbedBuilder()
+    .setTitle(`Welcome, ${member.displayName}!`)
+    .setDescription(
+      'Welcome to the soccer league! Please answer the quick questions below so we can get you sorted.\n\n' +
+      '**1.** What is your gender? *(for coed purposes)*\n' +
+      '**2.** What is your playing experience/ability?\n' +
+      '**3.** What roles/positions are you most comfortable in?\n' +
+      '**4.** What team(s) are you on?'
+    )
+    .setColor(0x667eea);
+
+  const genderRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('role_gender_Male').setLabel('Male').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('role_gender_Female').setLabel('Female').setStyle(ButtonStyle.Primary)
+  );
+
+  const experienceRow = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('role_experience')
+      .setPlaceholder('Select your playing experience...')
+      .addOptions(
+        { label: 'Just Starting', value: 'Just Starting' },
+        { label: 'Played as a Kid', value: 'Played as a Kid' },
+        { label: 'Played in High School', value: 'Played in High School' },
+        { label: 'Played in College', value: 'Played in College' },
+        { label: 'Played Pro/Semi-Pro', value: 'Played Pro/Semi-Pro' },
+      )
+  );
+
+  const positionRow = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('role_position')
+      .setPlaceholder('Select your preferred positions (pick all that apply)...')
+      .setMinValues(1)
+      .setMaxValues(4)
+      .addOptions(
+        { label: 'GK', description: 'Goalkeeper', value: 'GK' },
+        { label: 'DEF', description: 'Defender', value: 'DEF' },
+        { label: 'MID', description: 'Midfielder', value: 'MID' },
+        { label: 'FW', description: 'Forward', value: 'FW' },
+      )
+  );
+
+  const components = [genderRow, experienceRow, positionRow];
+
+  // Build team select menu from active teams
+  const season = db.getActiveSeason();
+  if (season) {
+    const teams = db.getAllTeams(season.id);
+    if (teams.length > 0) {
+      const teamRow = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('role_team')
+          .setPlaceholder('What team(s) are you on? (select all that apply)')
+          .setMinValues(1)
+          .setMaxValues(Math.min(teams.length, 25))
+          .addOptions(teams.map(t => ({
+            label: t.name,
+            description: t.division_name,
+            value: t.name,
+          })))
+      );
+      components.push(teamRow);
+    }
+  }
+
+  await postToChannel(LEAGUE_CHAT_ID, {
+    content: `Welcome ${member}!`,
+    embeds: [embed],
+    components,
+  });
+}
+
+async function assignRoles(interaction, group, selectedValues) {
+  const guild = interaction.guild || client.guilds.cache.get(GUILD_ID);
+  if (!guild) return interaction.reply({ content: 'Something went wrong.', ephemeral: true });
+
+  const member = await guild.members.fetch(interaction.user.id);
+
+  // Remove any existing roles in this group first
+  for (const roleName of ROLE_GROUPS[group]) {
+    const role = guild.roles.cache.find(r => r.name === roleName);
+    if (role && member.roles.cache.has(role.id)) {
+      await member.roles.remove(role);
+    }
+  }
+
+  // Assign selected roles
+  const added = [];
+  for (const value of selectedValues) {
+    const role = guild.roles.cache.find(r => r.name === value);
+    if (role) {
+      await member.roles.add(role);
+      added.push(role.name);
+    }
+  }
+
+  const labels = { gender: 'Gender', experience: 'Experience', position: 'Position(s)' };
+  await interaction.reply({ content: `${labels[group]} set: **${added.join(', ')}**`, ephemeral: true });
+}
+
+async function assignTeamRoles(interaction, teamNames) {
+  const guild = interaction.guild || client.guilds.cache.get(GUILD_ID);
+  if (!guild) return interaction.reply({ content: 'Something went wrong.', ephemeral: true });
+
+  const member = await guild.members.fetch(interaction.user.id);
+  const season = db.getActiveSeason();
+  if (!season) return interaction.reply({ content: 'No active season.', ephemeral: true });
+
+  const allTeams = db.getAllTeams(season.id);
+
+  // Remove all existing team roles first
+  for (const team of allTeams) {
+    const role = guild.roles.cache.find(r => r.name === team.name);
+    if (role && member.roles.cache.has(role.id)) {
+      await member.roles.remove(role);
+    }
+  }
+
+  // Add selected team roles + welcome in each team channel
+  const added = [];
+  for (const teamName of teamNames) {
+    const role = guild.roles.cache.find(r => r.name === teamName);
+    if (role) {
+      await member.roles.add(role);
+      added.push(teamName);
+    }
+
+    const team = allTeams.find(t => t.name === teamName);
+    if (team && team.discord_channel_id) {
+      const color = parseInt((team.color_hex || '#667eea').replace('#', ''), 16);
+      const embed = new EmbedBuilder()
+        .setDescription(`${getEmoji(team.color_hex)} **${member.displayName}** has joined **${team.name}**! Welcome to the squad!`)
+        .setColor(color);
+      await postToChannel(team.discord_channel_id, { embeds: [embed] });
+    }
+  }
+
+  await interaction.reply({ content: `Team(s) set: **${added.join(', ')}**`, ephemeral: true });
 }
 
 // ─── Posting Helpers ─────────────────────────────────────

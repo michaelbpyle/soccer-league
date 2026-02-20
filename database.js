@@ -505,12 +505,14 @@ function deleteTeam(id) {
 }
 
 function createSeason(name, startDate, gameDay) {
+  takeSnapshot('new-season');
   // Deactivate all current seasons
   db.prepare('UPDATE seasons SET active = 0').run();
   return db.prepare('INSERT INTO seasons (name, start_date, game_day) VALUES (?, ?, ?)').run(name, startDate, gameDay);
 }
 
 function regenerateAllSchedules(seasonId) {
+  takeSnapshot('regenerate-schedules');
   const divisions = getDivisions(seasonId);
   for (const div of divisions) {
     generateSchedule(seasonId, div.id);
@@ -548,6 +550,37 @@ function getNextGameForTeam(teamId, seasonId) {
   `).get(seasonId, today, teamId, teamId);
 }
 
+// ─── Snapshots ──────────────────────────────────────────
+const BACKUP_DIR = path.join(dataDir, 'snapshots');
+
+function takeSnapshot(reason) {
+  if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const tag = (reason || 'manual').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `league_${timestamp}_${tag}.db`;
+  const dest = path.join(BACKUP_DIR, filename);
+
+  // Use SQLite backup API via VACUUM INTO for a consistent copy
+  db.exec(`VACUUM INTO '${dest.replace(/'/g, "''")}'`);
+  console.log(`Snapshot saved: ${filename}`);
+  return filename;
+}
+
+function listSnapshots() {
+  if (!fs.existsSync(BACKUP_DIR)) return [];
+  return fs.readdirSync(BACKUP_DIR)
+    .filter(f => f.endsWith('.db'))
+    .sort()
+    .reverse()
+    .map(f => ({
+      filename: f,
+      path: path.join(BACKUP_DIR, f),
+      size: fs.statSync(path.join(BACKUP_DIR, f)).size,
+      created: fs.statSync(path.join(BACKUP_DIR, f)).mtime,
+    }));
+}
+
 // ─── Initialize ──────────────────────────────────────────
 createTables();
 seedDatabase();
@@ -580,5 +613,7 @@ module.exports = {
   setDiscordChannel,
   getTeamByName,
   getNextGameForTeam,
+  takeSnapshot,
+  listSnapshots,
   TEAM_COLORS,
 };
